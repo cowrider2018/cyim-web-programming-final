@@ -45,11 +45,11 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
 };
 
 export const orderStatusStyles: Record<OrderStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  paid: 'bg-sky-100 text-sky-800',
-  shipped: 'bg-violet-100 text-violet-800',
-  completed: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-taupe-200 text-ink-soft',
+  pending: 'bg-[#f3ead9] text-[#8a6a32]',
+  paid: 'bg-[#e6ede9] text-[#3f6b57]',
+  shipped: 'bg-[#e9e6f0] text-[#5b4f74]',
+  completed: 'bg-ink text-cream',
+  cancelled: 'bg-stone-200 text-ink-soft',
 };
 
 export const paymentMethodLabels: Record<PaymentMethod, string> = {

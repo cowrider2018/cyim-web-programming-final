@@ -58,7 +58,7 @@ export function AdminOrdersPage() {
               setStatus(filter.value);
               setPage(1);
             }}
-            className={status === filter.value ? 'btn-taupe' : 'btn-outline'}
+            className={status === filter.value ? 'btn-primary' : 'btn-outline'}
           >
             {filter.label}
           </button>
@@ -74,7 +74,7 @@ export function AdminOrdersPage() {
           <div className="surface mt-4 overflow-x-auto">
             <table className="w-full min-w-3xl text-sm">
               <thead>
-                <tr className="border-b border-taupe-200 text-left text-xs text-ink-faint">
+                <tr className="border-b border-line text-left text-xs text-ink-faint">
                   <th className="p-4 font-medium">訂單</th>
                   <th className="p-4 font-medium">顧客</th>
                   <th className="p-4 font-medium">配送</th>
@@ -83,7 +83,7 @@ export function AdminOrdersPage() {
                   <th className="p-4 font-medium">變更狀態</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-taupe-200">
+              <tbody className="divide-y divide-line">
                 {orders.data.items.map((order) => {
                   const options = nextStatuses[order.status];
                   return (
@@ -147,8 +147,8 @@ export function AdminOrdersPage() {
                                 }}
                                 className={`rounded-full border px-3 py-1 text-xs transition-colors ${
                                   option === 'cancelled'
-                                    ? 'border-taupe-400 text-taupe-600 hover:bg-taupe-100'
-                                    : 'border-taupe-300 text-ink-soft hover:bg-taupe-100'
+                                    ? 'border-line-strong text-gold hover:bg-stone-100'
+                                    : 'border-line-strong text-ink-soft hover:bg-stone-100'
                                 }`}
                               >
                                 → {orderStatusLabels[option]}

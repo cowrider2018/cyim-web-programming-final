@@ -1,36 +1,79 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth';
 import { useCart } from '../hooks/use-cart';
 import { useCategories } from '../hooks/use-catalog';
+import {
+  CartIcon,
+  CloseIcon,
+  InstagramIcon,
+  MailIcon,
+  MenuIcon,
+  PhoneIcon,
+  PinIcon,
+  SearchIcon,
+  UserIcon,
+} from './icons';
+
+function CartButton() {
+  const { data: cart } = useCart();
+  const count = cart?.itemCount ?? 0;
+  const [bump, setBump] = useState(false);
+  const previous = useRef(count);
+
+  // Pulse the badge whenever the item count grows.
+  useEffect(() => {
+    if (count > previous.current) {
+      setBump(true);
+      const timer = window.setTimeout(() => setBump(false), 420);
+      return () => window.clearTimeout(timer);
+    }
+    previous.current = count;
+    return undefined;
+  }, [count]);
+
+  useEffect(() => {
+    previous.current = count;
+  }, [count]);
+
+  return (
+    <Link
+      to="/cart"
+      className="relative p-1.5 text-ink transition-colors hover:text-gold"
+      aria-label={`購物車，${count} 件商品`}
+    >
+      <CartIcon size={21} />
+      {count > 0 && (
+        <span
+          className={`absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white ${
+            bump ? 'badge-bump' : ''
+          }`}
+        >
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 function Header() {
   const { user, isAdmin, logout } = useAuth();
-  const { data: cart } = useCart();
   const { data: categories } = useCategories();
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMenuOpen(false);
-    setDropdownOpen(false);
+    setSearchOpen(false);
   }, [location.pathname, location.search]);
 
-  // Close the category dropdown on an outside click, the way a hover menu
-  // would close when the pointer leaves it.
   useEffect(() => {
-    function onClick(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
@@ -38,166 +81,175 @@ function Header() {
     if (!term) return;
     navigate(`/store?q=${encodeURIComponent(term)}`);
     setSearch('');
+    setSearchOpen(false);
   }
 
-  const cartCount = cart?.itemCount ?? 0;
+  // NavLink matches on pathname only, so every /store?category=… link would
+  // read as active at once. Derive the active item from the query instead.
+  const params = new URLSearchParams(location.search);
+  const activeCategory = params.get('category');
+  const isStore = location.pathname === '/store';
+
+  const navLinks = [
+    {
+      to: '/store',
+      label: '全部商品',
+      active: isStore && !activeCategory && !params.get('q'),
+    },
+    ...(categories ?? []).map((category) => ({
+      to: `/store?category=${category.slug}`,
+      label: category.name,
+      active: isStore && activeCategory === category.slug,
+    })),
+    { to: '/about', label: '關於', active: location.pathname === '/about' },
+  ];
+
+  const navLinkClass = (active: boolean) =>
+    `link-underline text-[13px] tracking-wide transition-colors hover:text-ink ${
+      active ? 'is-active text-ink' : 'text-ink-soft'
+    }`;
 
   return (
-    <header className="bg-white">
-      <div className="mx-auto flex w-[92%] max-w-6xl items-center justify-between gap-4 py-4">
-        <Link to="/" className="brand text-3xl text-ink sm:text-[38px]">
-          Maisie
-        </Link>
-
-        <div className="hidden items-center gap-5 lg:flex">
-          <form onSubmit={handleSearch} role="search" className="search-box">
-            <button type="submit" aria-label="搜尋" className="p-2">
-              <img src="/images/search.png" alt="" className="size-4" />
-            </button>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search..."
-              className="flex-1 bg-transparent py-2 pr-3 text-sm text-ink outline-none placeholder:text-ink-faint"
-            />
-          </form>
-
-          <nav className="flex items-center gap-5" aria-label="主選單">
-            <NavLink to="/about" className="nav-item">
-              ABOUT US
-            </NavLink>
-
-            <div
-              ref={dropdownRef}
-              className="relative"
-              onMouseEnter={() => setDropdownOpen(true)}
-              onMouseLeave={() => setDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                className="nav-item"
-                aria-expanded={dropdownOpen}
-                aria-haspopup="true"
-                onClick={() => setDropdownOpen((open) => !open)}
-              >
-                商品分類
-              </button>
-              {dropdownOpen && (
-                <div className="absolute left-0 top-full z-20 min-w-40 bg-cream shadow-[0px_8px_16px_rgba(0,0,0,0.4)]">
-                  <Link to="/store" className="block px-4 py-3 text-sm hover:bg-taupe-300">
-                    All Products
-                  </Link>
-                  {categories?.map((category) => (
-                    <Link
-                      key={category.slug}
-                      to={`/store?category=${category.slug}`}
-                      className="block px-4 py-3 text-sm hover:bg-taupe-300"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <NavLink to="/cart" className="nav-item">
-              購物車{cartCount > 0 && `（${cartCount}）`}
-            </NavLink>
-
-            {isAdmin && (
-              <NavLink to="/admin" className="nav-item">
-                後台
-              </NavLink>
-            )}
-
-            {user ? (
-              <div className="flex items-center gap-2">
-                <Link to="/account" className="btn-dark">
-                  {user.name}
-                </Link>
-                <button type="button" onClick={() => logout()} className="btn-link">
-                  登出
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="btn-dark">
-                會員中心
-              </Link>
-            )}
-          </nav>
-        </div>
-
+    <header className="sticky top-0 z-50 border-b border-line bg-cream/85 backdrop-blur-md">
+      <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between gap-4 px-5">
         <button
           type="button"
-          className="btn-link lg:hidden"
+          className="p-1 text-ink lg:hidden"
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
           onClick={() => setMenuOpen((open) => !open)}
         >
           <span className="sr-only">選單</span>
-          <svg viewBox="0 0 24 24" aria-hidden className="size-6">
-            <path
-              d={menuOpen ? 'M5 5l14 14M19 5L5 19' : 'M4 7h16M4 12h16M4 17h16'}
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          {menuOpen ? <CloseIcon size={22} /> : <MenuIcon size={22} />}
         </button>
+
+        <Link
+          to="/"
+          className="font-display text-[30px] leading-none font-semibold tracking-wide text-ink lg:text-[34px]"
+        >
+          Maisie
+        </Link>
+
+        <nav
+          className="hidden items-center gap-7 lg:flex"
+          aria-label="主選單"
+        >
+          {navLinks.map((link) => (
+            <Link key={link.label} to={link.to} className={navLinkClass(link.active)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3.5">
+          <button
+            type="button"
+            onClick={() => setSearchOpen((open) => !open)}
+            className="p-1.5 text-ink transition-colors hover:text-gold"
+            aria-label="搜尋"
+            aria-expanded={searchOpen}
+          >
+            <SearchIcon size={21} />
+          </button>
+
+          <CartButton />
+
+          {user ? (
+            <div className="hidden items-center gap-3 lg:flex">
+              {isAdmin && (
+                <Link to="/admin" className="text-[13px] text-ink-soft hover:text-ink">
+                  後台
+                </Link>
+              )}
+              <Link
+                to="/account"
+                className="flex items-center gap-1.5 text-[13px] text-ink hover:text-gold"
+              >
+                <UserIcon size={20} />
+                {user.name}
+              </Link>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="text-[13px] text-ink-faint hover:text-ink"
+              >
+                登出
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden p-1.5 text-ink transition-colors hover:text-gold lg:block"
+              aria-label="會員登入"
+            >
+              <UserIcon size={21} />
+            </Link>
+          )}
+        </div>
       </div>
 
+      {/* Expanding search row */}
+      <div
+        className={`overflow-hidden border-line transition-[max-height,opacity] duration-300 ${
+          searchOpen ? 'max-h-24 border-t opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <form
+          onSubmit={handleSearch}
+          role="search"
+          className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-4"
+        >
+          <SearchIcon size={20} />
+          <input
+            ref={searchInput}
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="搜尋商品⋯"
+            className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
+            aria-label="搜尋商品"
+          />
+          <button type="submit" className="btn-ghost text-[13px]">
+            搜尋
+          </button>
+        </form>
+      </div>
+
+      {/* Mobile drawer */}
       {menuOpen && (
-        <div id="mobile-menu" className="border-t border-taupe-200 lg:hidden">
-          <nav className="mx-auto flex w-[92%] max-w-6xl flex-col gap-1 py-3">
-            <form onSubmit={handleSearch} role="search" className="search-box mb-2">
-              <button type="submit" aria-label="搜尋" className="p-2">
-                <img src="/images/search.png" alt="" className="size-4" />
-              </button>
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search..."
-                className="flex-1 bg-transparent py-2 pr-3 text-sm outline-none"
-              />
-            </form>
-            <Link to="/about" className="py-2 text-sm">
-              ABOUT US
-            </Link>
-            <Link to="/store" className="py-2 text-sm">
-              全部商品
-            </Link>
-            {categories?.map((category) => (
+        <div id="mobile-menu" className="border-t border-line bg-cream lg:hidden">
+          <nav className="mx-auto flex max-w-6xl flex-col px-5 py-2">
+            {navLinks.map((link) => (
               <Link
-                key={category.slug}
-                to={`/store?category=${category.slug}`}
-                className="py-2 pl-4 text-sm text-ink-soft"
+                key={link.label}
+                to={link.to}
+                className="border-b border-line py-3 text-sm text-ink"
               >
-                {category.name}
+                {link.label}
               </Link>
             ))}
-            <Link to="/cart" className="py-2 text-sm">
-              購物車{cartCount > 0 && `（${cartCount}）`}
-            </Link>
-            <div className="mt-2 border-t border-taupe-200 pt-2">
+            <div className="py-3">
               {user ? (
-                <>
+                <div className="flex flex-col gap-3">
                   {isAdmin && (
-                    <Link to="/admin" className="block py-2 text-sm">
+                    <Link to="/admin" className="text-sm text-ink">
                       後台管理
                     </Link>
                   )}
-                  <Link to="/account" className="block py-2 text-sm">
+                  <Link to="/account" className="text-sm text-ink">
                     會員中心
                   </Link>
-                  <button type="button" onClick={() => logout()} className="py-2 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="text-left text-sm text-ink-soft"
+                  >
                     登出
                   </button>
-                </>
+                </div>
               ) : (
-                <Link to="/login" className="block py-2 text-sm">
-                  會員中心 / 登入
+                <Link to="/login" className="text-sm text-ink">
+                  會員登入 / 註冊
                 </Link>
               )}
             </div>
@@ -210,56 +262,62 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="mt-16 bg-white">
-      <div className="mx-auto flex w-[90%] max-w-6xl flex-col justify-between gap-10 py-10 sm:flex-row">
-        <div className="flex items-center">
-          <p className="brand text-[30px] text-ink">Maisie</p>
-        </div>
-
-        <div className="flex gap-5">
+    <footer className="mt-24 border-t border-line bg-surface">
+      <div className="mx-auto max-w-6xl px-5 py-16">
+        <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
-            <Link to="/about">
-              <h2 className="brand mb-3 text-xl">CONTACT US</h2>
-            </Link>
-            <div className="flex flex-col gap-2.5 text-[15px]">
-              <div className="flex items-center gap-2.5">
-                <img src="/images/ins.png" alt="" className="size-5" />
-                <span>Maisie_Accessories</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <img src="/images/phone.png" alt="" className="size-5" />
-                <a href="tel:0800000000">0800-000-000</a>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <img src="/images/email.png" alt="" className="size-5" />
-                <a href="mailto:MaisieAccessories@gmail.com">MaisieAccessories@gmail.com</a>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <img src="/images/map.png" alt="" className="size-5" />
+            <p className="font-display text-3xl font-semibold text-ink">Maisie</p>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
+              手作感輕珠寶選物，讓日常穿搭多一點細節。單戴俐落，疊戴有層次。
+            </p>
+          </div>
+
+          <div>
+            <h2 className="eyebrow">Contact</h2>
+            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
+              <li className="flex items-center gap-2.5">
+                <InstagramIcon size={17} />
+                Maisie_Accessories
+              </li>
+              <li className="flex items-center gap-2.5">
+                <PhoneIcon size={17} />
+                <a href="tel:0800000000" className="hover:text-ink">
+                  0800-000-000
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <MailIcon size={17} />
+                <a href="mailto:MaisieAccessories@gmail.com" className="hover:text-ink">
+                  MaisieAccessories@gmail.com
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <PinIcon size={17} />
                 <a
                   href="https://maps.app.goo.gl/SV7Erzre8KS6aKP39"
                   target="_blank"
                   rel="noreferrer noopener"
+                  className="hover:text-ink"
                 >
                   桃園市中壢區中北路200號
                 </a>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
-        </div>
 
-        <div>
-          <h2 className="brand mb-3 text-xl">SERVICE</h2>
-          <div className="flex flex-col gap-2.5 text-[15px]">
-            <span>飾品保養</span>
-            <span>付款與配送</span>
-            <span>退換貨說明</span>
+          <div>
+            <h2 className="eyebrow">Service</h2>
+            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
+              <li>飾品保養</li>
+              <li>付款與配送</li>
+              <li>退換貨說明</li>
+            </ul>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-taupe-200">
-        <p className="mx-auto w-[90%] max-w-6xl py-4 text-xs text-ink-faint">
+      <div className="border-t border-line">
+        <p className="mx-auto max-w-6xl px-5 py-5 text-xs text-ink-faint">
           © {new Date().getFullYear()} Maisie. 學習用專案，非真實商店。
         </p>
       </div>
@@ -275,7 +333,7 @@ export function Layout() {
     <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded-lg focus:bg-black focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:m-3 focus:rounded-[var(--radius)] focus:bg-ink focus:px-4 focus:py-2 focus:text-cream"
       >
         跳至主要內容
       </a>

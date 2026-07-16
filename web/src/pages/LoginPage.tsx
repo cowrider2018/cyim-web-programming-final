@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { FormError } from '../components/ui';
 import { useAuth } from '../context/auth';
@@ -9,31 +9,6 @@ type Mode = 'login' | 'register';
 interface LocationState {
   from?: string;
 }
-
-/** Light-grey field with a leading icon, matching the original login form. */
-function Field({
-  icon,
-  children,
-}: {
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="my-3.5 flex items-center rounded-md bg-[#f3f1ef]">
-      <span className="ml-4 text-ink-faint">{icon}</span>
-      {children}
-    </div>
-  );
-}
-
-const icons = {
-  user: '👤',
-  calendar: '📅',
-  phone: '📞',
-  map: '📍',
-  mail: '✉️',
-  lock: '🔒',
-};
 
 export function LoginPage() {
   const { user, login, register } = useAuth();
@@ -87,167 +62,175 @@ export function LoginPage() {
     setForm((previous) => ({ ...previous, [field]: value }));
   }
 
-  const inputClass = 'w-full border-0 bg-transparent p-4 text-sm outline-none';
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError(null);
+  }
 
   return (
-    <div className="flex items-center justify-center bg-page px-4 py-10">
-      <div className="flex w-full max-w-5xl overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-        <img
-          src="/images/log.jpg"
-          alt=""
-          className="hidden w-1/2 object-cover md:block"
-        />
+    <div className="mx-auto grid max-w-6xl gap-0 px-5 py-12 lg:grid-cols-2 lg:gap-12">
+      <div className="hidden overflow-hidden rounded-[var(--radius-lg)] lg:block">
+        <img src="/images/log.jpg" alt="" className="size-full object-cover" />
+      </div>
 
-        <div className="flex w-full items-center justify-center bg-taupe-200 md:w-3/5">
-          <div className="w-full px-8 py-10 text-center sm:px-12">
-            <h1 className="relative mb-12 inline-block text-3xl">
-              {isRegister ? '註冊' : '登入'}
-              <span className="absolute -bottom-3 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-ink" />
+      <div className="flex items-center">
+        <div className="w-full max-w-md lg:mx-auto">
+          <div className="text-center">
+            <p className="eyebrow">Members</p>
+            <h1 className="mt-2 font-display text-5xl font-semibold text-ink">
+              {isRegister ? '建立帳號' : '歡迎回來'}
             </h1>
+            <p className="mt-2 text-sm text-ink-soft">
+              {isRegister ? '註冊後即可購物、追蹤訂單並留下評價。' : '登入以檢視購物車與訂單。'}
+            </p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="text-left">
-              {isRegister && (
-                <>
-                  <Field icon={icons.user}>
-                    <input
-                      id="name"
-                      aria-label="姓名"
-                      className={inputClass}
-                      required
-                      placeholder="姓名"
-                      autoComplete="name"
-                      value={form.name}
-                      onChange={(event) => update('name', event.target.value)}
-                    />
-                  </Field>
+          <div className="mt-8 grid grid-cols-2 rounded-full border border-line-strong p-1">
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              className={`rounded-full py-2 text-sm transition-colors ${
+                mode === 'login' ? 'bg-ink text-cream' : 'text-ink-soft'
+              }`}
+            >
+              登入
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              className={`rounded-full py-2 text-sm transition-colors ${
+                mode === 'register' ? 'bg-ink text-cream' : 'text-ink-soft'
+              }`}
+            >
+              註冊
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {isRegister && (
+              <>
+                <div>
+                  <label htmlFor="name" className="label">
+                    姓名
+                  </label>
+                  <input
+                    id="name"
+                    className="input"
+                    required
+                    autoComplete="name"
+                    value={form.name}
+                    onChange={(event) => update('name', event.target.value)}
+                  />
                   {fieldErrors.name && <p className="field-error">{fieldErrors.name}</p>}
+                </div>
 
-                  <Field icon={icons.calendar}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="birthDate" className="label">
+                      生日
+                    </label>
                     <input
                       id="birthDate"
-                      aria-label="生日"
                       type="date"
-                      className={inputClass}
+                      className="input"
                       required
                       value={form.birthDate}
                       onChange={(event) => update('birthDate', event.target.value)}
                     />
-                  </Field>
-                  {fieldErrors.birthDate && (
-                    <p className="field-error">{fieldErrors.birthDate}</p>
-                  )}
-
-                  <Field icon={icons.map}>
-                    <input
-                      id="address"
-                      aria-label="地址"
-                      className={inputClass}
-                      required
-                      placeholder="地址"
-                      autoComplete="street-address"
-                      value={form.address}
-                      onChange={(event) => update('address', event.target.value)}
-                    />
-                  </Field>
-                  {fieldErrors.address && <p className="field-error">{fieldErrors.address}</p>}
-
-                  <Field icon={icons.phone}>
+                    {fieldErrors.birthDate && (
+                      <p className="field-error">{fieldErrors.birthDate}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="label">
+                      行動電話
+                    </label>
                     <input
                       id="phone"
-                      aria-label="行動電話"
-                      className={inputClass}
+                      className="input"
                       required
-                      placeholder="行動電話 0912345678"
                       inputMode="numeric"
                       autoComplete="tel"
+                      placeholder="0912345678"
                       value={form.phone}
                       onChange={(event) => update('phone', event.target.value)}
                     />
-                  </Field>
-                  {fieldErrors.phone && <p className="field-error">{fieldErrors.phone}</p>}
-                </>
-              )}
+                    {fieldErrors.phone && <p className="field-error">{fieldErrors.phone}</p>}
+                  </div>
+                </div>
 
-              <Field icon={icons.mail}>
-                <input
-                  id="email"
-                  aria-label="Email"
-                  type="email"
-                  className={inputClass}
-                  required
-                  placeholder="Email"
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={(event) => update('email', event.target.value)}
-                />
-              </Field>
-              {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
-
-              <Field icon={icons.lock}>
-                <input
-                  id="password"
-                  aria-label="密碼"
-                  type="password"
-                  className={inputClass}
-                  required
-                  placeholder="密碼"
-                  autoComplete={isRegister ? 'new-password' : 'current-password'}
-                  value={form.password}
-                  onChange={(event) => update('password', event.target.value)}
-                />
-              </Field>
-              {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
-              {isRegister && !fieldErrors.password && (
-                <p className="mt-1 text-xs text-ink-faint">密碼至少 8 個字元</p>
-              )}
-
-              <div className="mt-4">
-                <FormError error={error} />
-              </div>
-
-              {/* Two buttons: the active mode submits, the other switches mode. */}
-              <div className="flex justify-between gap-3 pt-5">
-                <button
-                  type={mode === 'login' ? 'submit' : 'button'}
-                  onClick={mode === 'login' ? undefined : () => setMode('login')}
-                  disabled={pending}
-                  className={`h-10 flex-1 rounded-[20px] border-0 text-sm transition-colors ${
-                    mode === 'login'
-                      ? 'bg-black text-white'
-                      : 'bg-[#eaeaea] text-[#555]'
-                  }`}
-                >
-                  登入
-                </button>
-                <button
-                  type={mode === 'register' ? 'submit' : 'button'}
-                  onClick={mode === 'register' ? undefined : () => setMode('register')}
-                  disabled={pending}
-                  className={`h-10 flex-1 rounded-[20px] border-0 text-sm transition-colors ${
-                    mode === 'register'
-                      ? 'bg-black text-white'
-                      : 'bg-[#eaeaea] text-[#555]'
-                  }`}
-                >
-                  註冊
-                </button>
-              </div>
-            </form>
-
-            {mode === 'login' && (
-              <div className="mt-6 rounded-md bg-white/60 p-4 text-left text-xs text-ink-soft">
-                <p className="font-medium">示範帳號</p>
-                <p className="mt-1.5">顧客：asd1234@gmail.com / password1234</p>
-                <p>店長：admin@maisie.tw / admin1234</p>
-              </div>
+                <div>
+                  <label htmlFor="address" className="label">
+                    地址
+                  </label>
+                  <input
+                    id="address"
+                    className="input"
+                    required
+                    autoComplete="street-address"
+                    value={form.address}
+                    onChange={(event) => update('address', event.target.value)}
+                  />
+                  {fieldErrors.address && <p className="field-error">{fieldErrors.address}</p>}
+                </div>
+              </>
             )}
 
-            <p className="mt-6 text-center text-xs text-ink-faint">
-              <Link to="/" className="hover:text-ink">
-                ← 回到首頁
-              </Link>
-            </p>
-          </div>
+            <div>
+              <label htmlFor="email" className="label">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                required
+                autoComplete="email"
+                value={form.email}
+                onChange={(event) => update('email', event.target.value)}
+              />
+              {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="password" className="label">
+                密碼
+              </label>
+              <input
+                id="password"
+                type="password"
+                className="input"
+                required
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                value={form.password}
+                onChange={(event) => update('password', event.target.value)}
+              />
+              {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
+              {isRegister && !fieldErrors.password && (
+                <p className="mt-1.5 text-xs text-ink-faint">密碼至少 8 個字元</p>
+              )}
+            </div>
+
+            <FormError error={error} />
+
+            <button type="submit" disabled={pending} className="btn-primary w-full py-3.5">
+              {pending ? '處理中⋯' : isRegister ? '註冊' : '登入'}
+            </button>
+          </form>
+
+          {mode === 'login' && (
+            <div className="mt-6 rounded-[var(--radius)] border border-line bg-surface-2 p-4 text-xs text-ink-soft">
+              <p className="font-medium text-ink">示範帳號</p>
+              <p className="mt-1.5">顧客：asd1234@gmail.com / password1234</p>
+              <p>店長：admin@maisie.tw / admin1234</p>
+            </div>
+          )}
+
+          <p className="mt-6 text-center text-xs text-ink-faint">
+            <Link to="/" className="hover:text-ink">
+              ← 回到首頁
+            </Link>
+          </p>
         </div>
       </div>
     </div>

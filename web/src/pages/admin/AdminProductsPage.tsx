@@ -62,7 +62,7 @@ export function AdminProductsPage() {
 
         <button
           type="button"
-          className="btn-taupe"
+          className="btn-primary"
           onClick={() => setEditing({ mode: 'create' })}
         >
           + 上架新品
@@ -82,7 +82,7 @@ export function AdminProductsPage() {
       <div className="surface mt-4 overflow-x-auto">
         <table className="w-full min-w-3xl text-sm">
           <thead>
-            <tr className="border-b border-taupe-200 text-left text-xs text-ink-faint">
+            <tr className="border-b border-line text-left text-xs text-ink-faint">
               <th className="p-4 font-medium">ID</th>
               <th className="p-4 font-medium">商品</th>
               <th className="p-4 font-medium">分類</th>
@@ -92,9 +92,9 @@ export function AdminProductsPage() {
               <th className="p-4 text-right font-medium">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-taupe-200">
+          <tbody className="divide-y divide-line">
             {products.data.items.map((product) => (
-              <tr key={product.id} className={product.isActive ? '' : 'bg-taupe-100/60'}>
+              <tr key={product.id} className={product.isActive ? '' : 'bg-stone-100/60'}>
                 <td className="p-4 text-ink-faint">#{product.id}</td>
                 <td className="max-w-56 p-4">
                   <p className="truncate text-ink">{product.name}</p>
@@ -128,7 +128,7 @@ export function AdminProductsPage() {
                     className={`rounded-full px-2.5 py-0.5 text-xs ${
                       product.isActive
                         ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-taupe-200 text-ink-soft'
+                        : 'bg-stone-200 text-ink-soft'
                     }`}
                   >
                     {product.isActive ? '販售中' : '已下架'}
@@ -238,7 +238,7 @@ function ProductForm({ editing, onClose }: { editing: Editing; onClose: () => vo
         <h2 className="text-2xl text-ink">
           {existing ? `編輯商品 #${existing.id}` : '上架新品'}
         </h2>
-        <button type="button" onClick={onClose} className="btn-link">
+        <button type="button" onClick={onClose} className="btn-ghost">
           關閉 ✕
         </button>
       </div>
@@ -357,7 +357,7 @@ function ProductForm({ editing, onClose }: { editing: Editing; onClose: () => vo
               />
               <button
                 type="button"
-                className="btn-link px-3"
+                className="btn-ghost px-3"
                 disabled={variants.length <= 1}
                 onClick={() =>
                   setVariants((previous) => previous.filter((_, i) => i !== index))
@@ -384,10 +384,10 @@ function ProductForm({ editing, onClose }: { editing: Editing; onClose: () => vo
       </fieldset>
 
       <div className="mt-6 flex items-center gap-3">
-        <button type="submit" disabled={mutation.isPending} className="btn-taupe">
+        <button type="submit" disabled={mutation.isPending} className="btn-primary">
           {mutation.isPending ? '儲存中…' : existing ? '儲存變更' : '上架商品'}
         </button>
-        <button type="button" onClick={onClose} className="btn-link">
+        <button type="button" onClick={onClose} className="btn-ghost">
           取消
         </button>
       </div>

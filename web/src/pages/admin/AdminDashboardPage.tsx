@@ -74,7 +74,7 @@ export function AdminDashboardPage() {
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs ${
                       row.stock === 0
-                        ? 'bg-taupe-100 text-taupe-600'
+                        ? 'bg-stone-100 text-gold'
                         : 'bg-amber-100 text-amber-800'
                     }`}
                   >
@@ -95,13 +95,13 @@ export function AdminDashboardPage() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-taupe-200 text-left text-xs text-ink-faint">
+                <tr className="border-b border-line text-left text-xs text-ink-faint">
                   <th className="pb-2 font-medium">商品</th>
                   <th className="pb-2 text-right font-medium">售出</th>
                   <th className="pb-2 text-right font-medium">營收</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-taupe-200">
+              <tbody className="divide-y divide-line">
                 {data.topProducts.map((row) => (
                   <tr key={row.productId}>
                     <td className="py-3">

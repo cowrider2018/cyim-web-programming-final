@@ -31,7 +31,7 @@ export function OrderDetailPage() {
       {justPlaced && (
         <div
           role="status"
-          className="mb-8 rounded-[20px] bg-taupe-200 p-6 text-center shadow-[0_2px_4px_rgba(0,0,0,0.12)]"
+          className="mb-8 rounded-[var(--radius-lg)] bg-stone-200 p-6 text-center shadow-[0_2px_4px_rgba(0,0,0,0.12)]"
         >
           <p className="text-3xl italic text-ink">訂單已送出</p>
           <p className="mt-2 text-sm text-ink-soft">感謝你的訂購，我們會在兩個工作天內出貨。</p>
@@ -50,7 +50,7 @@ export function OrderDetailPage() {
         {canCancel && (
           <button
             type="button"
-            className="rounded-[10px] border-2 border-taupe-400 bg-white px-4 py-2 text-sm text-taupe-600 hover:bg-taupe-100"
+            className="rounded-[10px] border-2 border-line-strong bg-white px-4 py-2 text-sm text-gold hover:bg-stone-100"
             disabled={cancelOrder.isPending}
             onClick={() => {
               if (window.confirm('確定要取消這筆訂單嗎？庫存將會歸還。')) {
@@ -65,12 +65,12 @@ export function OrderDetailPage() {
 
       <FormError error={cancelOrder.error} />
 
-      <section className="surface mt-4 divide-y divide-taupe-200">
+      <section className="surface mt-4 divide-y divide-line">
         {data.items.map((item) => (
           <div key={item.id} className="flex gap-4 p-5">
             <Link
               to={`/product/${item.productId}`}
-              className="size-20 shrink-0 overflow-hidden rounded-[5px] bg-taupe-100"
+              className="size-20 shrink-0 overflow-hidden rounded-[var(--radius)] bg-stone-100"
             >
               {item.imageUrl && (
                 <img src={item.imageUrl} alt="" className="size-full object-cover" />
@@ -84,7 +84,7 @@ export function OrderDetailPage() {
               <p className="mt-1 text-xs text-ink-faint">
                 {formatPrice(item.unitPrice)} × {item.quantity}
               </p>
-              {item.hasReview && <p className="mt-1.5 text-xs text-taupe-600">已評價</p>}
+              {item.hasReview && <p className="mt-1.5 text-xs text-gold">已評價</p>}
             </div>
             <p className="text-lg">{formatPrice(item.lineTotal)}</p>
           </div>
@@ -99,7 +99,7 @@ export function OrderDetailPage() {
             <dt className="text-ink-soft">運費</dt>
             <dd>{data.shippingFee === 0 ? '免運' : formatPrice(data.shippingFee)}</dd>
           </div>
-          <div className="flex justify-between border-t border-taupe-200 pt-2 text-lg">
+          <div className="flex justify-between border-t border-line pt-2 text-lg">
             <dt className="font-medium">總計</dt>
             <dd className="font-bold">{formatPrice(data.totalPrice)}</dd>
           </div>
@@ -150,7 +150,7 @@ export function OrderDetailPage() {
         <Link to="/account" className="btn-outline">
           返回會員中心
         </Link>
-        <Link to="/store" className="btn-link">
+        <Link to="/store" className="btn-ghost">
           繼續選購
         </Link>
       </div>

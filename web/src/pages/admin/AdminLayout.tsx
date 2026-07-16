@@ -14,7 +14,7 @@ export function AdminLayout() {
         <h1 className="mt-2 text-4xl text-ink">後台管理</h1>
       </header>
 
-      <nav className="flex gap-1 border-b border-taupe-200" aria-label="後台選單">
+      <nav className="flex gap-1 border-b border-line" aria-label="後台選單">
         {links.map((link) => (
           <NavLink
             key={link.to}

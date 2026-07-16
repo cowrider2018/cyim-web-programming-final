@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { FormError, Spinner } from '../components/ui';
+import { useToast } from '../components/Toast';
 import { useAuth } from '../context/auth';
 import { useCart } from '../hooks/use-cart';
 import { useCheckout } from '../hooks/use-orders';
@@ -13,6 +14,7 @@ export function CheckoutPage() {
   const cart = useCart();
   const checkout = useCheckout();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card');
   const [form, setForm] = useState({
@@ -34,15 +36,21 @@ export function CheckoutPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const result = await checkout.mutateAsync({
-      paymentMethod,
-      recipientName: form.recipientName,
-      recipientPhone: form.recipientPhone,
-      shippingAddress: form.shippingAddress,
-      ...(paymentMethod === 'credit_card' ? { cardNumber: form.cardNumber } : {}),
-      ...(form.notes ? { notes: form.notes } : {}),
-    });
-    navigate(`/orders/${result.orderId}?placed=1`, { replace: true });
+    try {
+      const result = await checkout.mutateAsync({
+        paymentMethod,
+        recipientName: form.recipientName,
+        recipientPhone: form.recipientPhone,
+        shippingAddress: form.shippingAddress,
+        ...(paymentMethod === 'credit_card' ? { cardNumber: form.cardNumber } : {}),
+        ...(form.notes ? { notes: form.notes } : {}),
+      });
+      navigate(`/orders/${result.orderId}?placed=1`, { replace: true });
+    } catch (error) {
+      if (!(error instanceof ApiError) || !error.fieldErrors) {
+        toast('送出訂單失敗，請稍後再試', 'error');
+      }
+    }
   }
 
   function update(field: keyof typeof form, value: string) {
@@ -50,14 +58,17 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto w-[90%] max-w-5xl py-10">
-      <h1 className="pb-8 text-3xl font-bold italic">結帳</h1>
+    <div className="mx-auto max-w-6xl px-5 py-12">
+      <header className="border-b border-line pb-6 text-center">
+        <p className="eyebrow">Checkout</p>
+        <h1 className="mt-2 font-display text-5xl font-semibold">結帳</h1>
+      </header>
 
-      <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <form onSubmit={handleSubmit} className="mt-10 grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">
-          <section className="surface p-6">
-            <h2 className="text-2xl">配送資訊</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <section className="surface p-6 sm:p-8">
+            <h2 className="font-display text-2xl font-semibold">配送資訊</h2>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <div>
                 <label htmlFor="recipientName" className="label">
                   收件人姓名
@@ -123,18 +134,18 @@ export function CheckoutPage() {
             </div>
           </section>
 
-          <section className="surface p-6">
-            <h2 className="text-2xl">付款方式</h2>
-            <fieldset className="mt-5">
+          <section className="surface p-6 sm:p-8">
+            <h2 className="font-display text-2xl font-semibold">付款方式</h2>
+            <fieldset className="mt-6">
               <legend className="sr-only">選擇付款方式</legend>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(Object.keys(paymentMethodLabels) as PaymentMethod[]).map((method) => (
                   <label
                     key={method}
-                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-colors ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius)] border p-4 transition-colors ${
                       paymentMethod === method
-                        ? 'border-taupe-500 bg-taupe-100'
-                        : 'border-taupe-300 hover:border-taupe-400'
+                        ? 'border-ink bg-stone-100'
+                        : 'border-line-strong hover:border-ink'
                     }`}
                   >
                     <input
@@ -143,7 +154,7 @@ export function CheckoutPage() {
                       value={method}
                       checked={paymentMethod === method}
                       onChange={() => setPaymentMethod(method)}
-                      className="accent-taupe-500"
+                      className="accent-gold"
                     />
                     <span className="text-sm">{paymentMethodLabels[method]}</span>
                   </label>
@@ -179,14 +190,14 @@ export function CheckoutPage() {
           <FormError error={checkout.error} />
         </div>
 
-        <aside className="h-fit lg:sticky lg:top-6">
+        <aside className="h-fit lg:sticky lg:top-24">
           <div className="surface p-6">
-            <h2 className="text-2xl">訂單摘要</h2>
+            <h2 className="font-display text-2xl font-semibold">訂單摘要</h2>
 
             <ul className="mt-5 space-y-3">
               {data.items.map((item) => (
                 <li key={item.variantId} className="flex gap-3">
-                  <div className="size-14 shrink-0 overflow-hidden rounded-[5px] bg-taupe-100">
+                  <div className="size-14 shrink-0 overflow-hidden rounded-[var(--radius)] border border-line bg-stone-100">
                     {item.imageUrl && (
                       <img src={item.imageUrl} alt="" className="size-full object-cover" />
                     )}
@@ -202,7 +213,7 @@ export function CheckoutPage() {
               ))}
             </ul>
 
-            <dl className="mt-5 space-y-2 border-t border-taupe-300 pt-4 text-sm">
+            <dl className="mt-5 space-y-2 border-t border-line pt-4 text-sm">
               <div className="flex justify-between">
                 <dt className="text-ink-soft">小計</dt>
                 <dd>{formatPrice(data.subtotal)}</dd>
@@ -211,20 +222,16 @@ export function CheckoutPage() {
                 <dt className="text-ink-soft">運費</dt>
                 <dd>{data.shippingFee === 0 ? '免運' : formatPrice(data.shippingFee)}</dd>
               </div>
-              <div className="flex justify-between border-t border-taupe-300 pt-2 text-lg">
+              <div className="flex justify-between border-t border-line pt-2 text-lg">
                 <dt className="font-medium">應付金額</dt>
-                <dd className="font-bold">{formatPrice(data.total)}</dd>
+                <dd className="font-display text-2xl font-semibold">{formatPrice(data.total)}</dd>
               </div>
             </dl>
 
-            <button
-              type="submit"
-              disabled={checkout.isPending}
-              className="btn-taupe mt-6 w-full py-3"
-            >
-              {checkout.isPending ? '送出中…' : '確認送出訂單'}
+            <button type="submit" disabled={checkout.isPending} className="btn-primary mt-6 w-full py-3.5">
+              {checkout.isPending ? '送出中⋯' : '確認送出訂單'}
             </button>
-            <Link to="/cart" className="btn-link mt-2 w-full">
+            <Link to="/cart" className="mt-3 block text-center text-sm text-ink-soft hover:text-ink">
               返回購物車
             </Link>
           </div>

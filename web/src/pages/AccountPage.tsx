@@ -10,6 +10,8 @@ import {
   StarRating,
   StatusBadge,
 } from '../components/ui';
+import { StarIcon, TrashIcon } from '../components/icons';
+import { useToast } from '../components/Toast';
 import { useAuth } from '../context/auth';
 import {
   useCreateReview,
@@ -34,10 +36,13 @@ export function AccountPage() {
   const [tab, setTab] = useState<Tab>('profile');
 
   return (
-    <section className="mx-auto flex w-[90%] max-w-4xl flex-col items-center py-10">
-      <h1 className="text-4xl italic">會員中心</h1>
+    <section className="mx-auto max-w-4xl px-5 py-12">
+      <header className="border-b border-line pb-6 text-center">
+        <p className="eyebrow">Account</p>
+        <h1 className="mt-2 font-display text-5xl font-semibold">會員中心</h1>
+      </header>
 
-      <div className="mt-6 flex flex-wrap justify-center gap-4" role="tablist">
+      <div className="mt-6 flex justify-center gap-8" role="tablist">
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -45,8 +50,10 @@ export function AccountPage() {
             role="tab"
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
-            className={`btn-mute min-w-40 text-lg ${
-              tab === item.id ? 'bg-mute-hover' : ''
+            className={`-mb-px border-b-2 pb-3 text-sm transition-colors ${
+              tab === item.id
+                ? 'border-gold text-ink'
+                : 'border-transparent text-ink-faint hover:text-ink'
             }`}
           >
             {item.label}
@@ -54,7 +61,7 @@ export function AccountPage() {
         ))}
       </div>
 
-      <div className="mt-8 w-full">
+      <div className="pt-10">
         {tab === 'profile' && <ProfileTab />}
         {tab === 'orders' && <OrdersTab />}
         {tab === 'reviews' && <ReviewsTab />}
@@ -66,7 +73,7 @@ export function AccountPage() {
 function ProfileTab() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [saved, setSaved] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const [profile, setProfile] = useState({
     name: user?.name ?? '',
@@ -79,30 +86,25 @@ function ProfileTab() {
     mutationFn: (input: typeof profile) => api.patch('/auth/me', input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      setSaved('個人資料已更新');
-      window.setTimeout(() => setSaved(null), 2500);
+      toast('個人資料已更新');
     },
+    onError: () => toast('更新失敗，請稍後再試', 'error'),
   });
 
   const changePassword = useMutation({
     mutationFn: (input: typeof passwords) => api.post('/auth/me/password', input),
     onSuccess: () => {
       setPasswords({ currentPassword: '', newPassword: '' });
-      setSaved('密碼已更新');
-      window.setTimeout(() => setSaved(null), 2500);
+      toast('密碼已更新');
     },
   });
 
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <section className="rounded-[30px] bg-white p-8 shadow-[0_5px_5px_rgba(0,0,0,0.15)]">
-        <div className="flex items-center gap-4">
-          <img src="/images/person.png" alt="" className="size-16" />
-          <h2 className="text-2xl">個人資料</h2>
-        </div>
-
+    <div className="grid gap-6 md:grid-cols-2">
+      <section className="surface p-6 sm:p-8">
+        <h2 className="font-display text-2xl font-semibold">個人資料</h2>
         <form
           className="mt-6 space-y-4"
           onSubmit={(event: FormEvent) => {
@@ -116,7 +118,7 @@ function ProfileTab() {
             </label>
             <input
               id="profile-email"
-              className="input bg-taupe-100 text-ink-faint"
+              className="input bg-stone-100 text-ink-faint"
               value={user.email}
               disabled
             />
@@ -162,14 +164,14 @@ function ProfileTab() {
           </div>
 
           <FormError error={updateProfile.error} />
-          <button type="submit" disabled={updateProfile.isPending} className="btn-dark">
-            {updateProfile.isPending ? '儲存中…' : '儲存變更'}
+          <button type="submit" disabled={updateProfile.isPending} className="btn-primary">
+            {updateProfile.isPending ? '儲存中⋯' : '儲存變更'}
           </button>
         </form>
       </section>
 
-      <section className="rounded-[30px] bg-white p-8 shadow-[0_5px_5px_rgba(0,0,0,0.15)]">
-        <h2 className="text-2xl">變更密碼</h2>
+      <section className="surface h-fit p-6 sm:p-8">
+        <h2 className="font-display text-2xl font-semibold">變更密碼</h2>
         <form
           className="mt-6 space-y-4"
           onSubmit={(event: FormEvent) => {
@@ -189,10 +191,7 @@ function ProfileTab() {
               autoComplete="current-password"
               value={passwords.currentPassword}
               onChange={(event) =>
-                setPasswords((previous) => ({
-                  ...previous,
-                  currentPassword: event.target.value,
-                }))
+                setPasswords((previous) => ({ ...previous, currentPassword: event.target.value }))
               }
             />
           </div>
@@ -209,22 +208,19 @@ function ProfileTab() {
               autoComplete="new-password"
               value={passwords.newPassword}
               onChange={(event) =>
-                setPasswords((previous) => ({
-                  ...previous,
-                  newPassword: event.target.value,
-                }))
+                setPasswords((previous) => ({ ...previous, newPassword: event.target.value }))
               }
             />
             <p className="mt-1.5 text-xs text-ink-faint">至少 8 個字元</p>
           </div>
 
           <FormError error={changePassword.error} />
-          <button type="submit" disabled={changePassword.isPending} className="btn-mute">
-            {changePassword.isPending ? '更新中…' : '更新密碼'}
+          <button type="submit" disabled={changePassword.isPending} className="btn-outline">
+            {changePassword.isPending ? '更新中⋯' : '更新密碼'}
           </button>
         </form>
 
-        <dl className="mt-6 space-y-1.5 border-t border-taupe-200 pt-5 text-xs text-ink-faint">
+        <dl className="mt-6 space-y-1.5 border-t border-line pt-5 text-xs text-ink-faint">
           <div className="flex justify-between">
             <dt>會員編號</dt>
             <dd>#{user.id}</dd>
@@ -241,12 +237,6 @@ function ProfileTab() {
           )}
         </dl>
       </section>
-
-      {saved && (
-        <p role="status" className="rounded-lg bg-taupe-100 px-3.5 py-2.5 text-sm text-ink">
-          {saved}
-        </p>
-      )}
     </div>
   );
 }
@@ -264,7 +254,7 @@ function OrdersTab() {
         title="還沒有訂單"
         description="下第一筆訂單後，紀錄會出現在這裡。"
         action={
-          <Link to="/store" className="btn-taupe mt-2">
+          <Link to="/store" className="btn-primary mt-2">
             開始選購
           </Link>
         }
@@ -273,17 +263,14 @@ function OrdersTab() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       <ul className="space-y-4">
         {orders.data.items.map((order) => (
-          <li
-            key={order.id}
-            className="rounded-[20px] bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.12)]"
-          >
+          <li key={order.id} className="surface p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-3">
-                  <Link to={`/orders/${order.id}`} className="font-medium hover:underline">
+                  <Link to={`/orders/${order.id}`} className="font-medium hover:text-gold">
                     訂單 #{order.id}
                   </Link>
                   <StatusBadge status={order.status} />
@@ -293,7 +280,9 @@ function OrdersTab() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xl">{formatPrice(order.totalPrice)}</p>
+                <p className="font-display text-xl font-semibold">
+                  {formatPrice(order.totalPrice)}
+                </p>
                 <Link to={`/orders/${order.id}`} className="text-xs text-ink-soft hover:text-ink">
                   查看明細 →
                 </Link>
@@ -316,13 +305,14 @@ function ReviewsTab() {
   const reviewable = useReviewableItems();
   const myReviews = useMyReviews();
   const deleteReview = useDeleteReview();
+  const { toast } = useToast();
 
   if (reviewable.isPending || myReviews.isPending) return <Spinner />;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
+    <div className="space-y-12">
       <section>
-        <h2 className="text-2xl">待評價商品</h2>
+        <h2 className="font-display text-2xl font-semibold">待評價商品</h2>
         <p className="mt-1 text-sm text-ink-soft">商品出貨後即可留下評價。</p>
         <div className="mt-5">
           {reviewable.data && reviewable.data.length > 0 ? (
@@ -332,29 +322,23 @@ function ReviewsTab() {
               ))}
             </ul>
           ) : (
-            <EmptyState
-              title="沒有待評價的商品"
-              description="等訂單出貨後，就能在這裡留下評價。"
-            />
+            <EmptyState title="沒有待評價的商品" description="等訂單出貨後，就能在這裡留下評價。" />
           )}
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl">歷史評論</h2>
+        <h2 className="font-display text-2xl font-semibold">歷史評論</h2>
         <div className="mt-5">
           {myReviews.data && myReviews.data.length > 0 ? (
             <ul className="space-y-4">
               {myReviews.data.map((review) => (
-                <li
-                  key={review.id}
-                  className="rounded-[20px] bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.12)]"
-                >
+                <li key={review.id} className="surface p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <Link
                         to={`/product/${review.productId}`}
-                        className="text-sm font-medium hover:underline"
+                        className="font-medium hover:text-gold"
                       >
                         {review.productName}
                       </Link>
@@ -364,16 +348,18 @@ function ReviewsTab() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <time className="text-xs text-ink-faint">
-                        {formatDate(review.createdAt)}
-                      </time>
+                      <time className="text-xs text-ink-faint">{formatDate(review.createdAt)}</time>
                       <button
                         type="button"
-                        onClick={() => deleteReview.mutate(review.id)}
+                        onClick={() => {
+                          deleteReview.mutate(review.id, {
+                            onSuccess: () => toast('已刪除評論'),
+                          });
+                        }}
                         disabled={deleteReview.isPending}
-                        className="mt-2 block text-xs text-ink-faint hover:text-red-700"
+                        className="mt-2 flex items-center gap-1 text-xs text-ink-faint hover:text-danger"
                       >
-                        刪除
+                        <TrashIcon size={14} /> 刪除
                       </button>
                     </div>
                   </div>
@@ -394,14 +380,16 @@ function ReviewsTab() {
 
 function ReviewForm({ item }: { item: ReviewableItem }) {
   const createReview = useCreateReview();
+  const { toast } = useToast();
   const [rating, setRating] = useState(5);
+  const [hover, setHover] = useState(0);
   const [body, setBody] = useState('');
 
   return (
-    <li className="rounded-[20px] bg-white p-5 shadow-[0_2px_4px_rgba(0,0,0,0.12)]">
+    <li className="surface p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <Link to={`/product/${item.productId}`} className="text-sm font-medium hover:underline">
+          <Link to={`/product/${item.productId}`} className="font-medium hover:text-gold">
             {item.productName}
           </Link>
           <p className="text-xs text-ink-faint">
@@ -415,27 +403,26 @@ function ReviewForm({ item }: { item: ReviewableItem }) {
         className="mt-4 space-y-3"
         onSubmit={(event: FormEvent) => {
           event.preventDefault();
-          createReview.mutate({
-            orderId: item.orderId,
-            variantId: item.variantId,
-            rating,
-            body,
-          });
+          createReview.mutate(
+            { orderId: item.orderId, variantId: item.variantId, rating, body },
+            { onSuccess: () => toast('感謝你的評價！') },
+          );
         }}
       >
         <fieldset>
           <legend className="label">評分</legend>
-          <div className="flex gap-1 text-3xl leading-none">
+          <div className="flex gap-1 text-gold" onMouseLeave={() => setHover(0)}>
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
                 type="button"
                 onClick={() => setRating(star)}
+                onMouseEnter={() => setHover(star)}
                 aria-label={`給 ${star} 星`}
                 aria-pressed={rating === star}
-                className={star <= rating ? 'text-[gold]' : 'text-taupe-300 hover:text-taupe-400'}
+                className="transition-transform hover:scale-110"
               >
-                ★
+                <StarIcon size={26} filled={star <= (hover || rating)} />
               </button>
             ))}
           </div>
@@ -450,15 +437,15 @@ function ReviewForm({ item }: { item: ReviewableItem }) {
             rows={2}
             maxLength={1000}
             className="input resize-none"
-            placeholder="分享你的配戴心得…"
+            placeholder="分享你的配戴心得⋯"
             value={body}
             onChange={(event) => setBody(event.target.value)}
           />
         </div>
 
         <FormError error={createReview.error} />
-        <button type="submit" disabled={createReview.isPending} className="btn-taupe">
-          {createReview.isPending ? '送出中…' : '送出評價'}
+        <button type="submit" disabled={createReview.isPending} className="btn-primary">
+          {createReview.isPending ? '送出中⋯' : '送出評價'}
         </button>
       </form>
     </li>

@@ -1,6 +1,8 @@
 import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
-import { EmptyState, ErrorState, Pagination, Spinner } from '../components/ui';
+import { ProductGridSkeleton } from '../components/Skeleton';
+import { EmptyState, ErrorState, Pagination } from '../components/ui';
+import { ChevronDown, CloseIcon } from '../components/icons';
 import { useCategories, useProducts } from '../hooks/use-catalog';
 
 const sortOptions = [
@@ -10,8 +12,6 @@ const sortOptions = [
 ] as const;
 
 export function StorePage() {
-  // Filter state lives in the URL so results are shareable and the back button
-  // behaves.
   const [searchParams, setSearchParams] = useSearchParams();
 
   const category = searchParams.get('category') ?? undefined;
@@ -34,26 +34,33 @@ export function StorePage() {
 
   const activeCategory = categories.data?.find((item) => item.slug === category);
   const heading = q ? `搜尋「${q}」` : (activeCategory?.name ?? '全部商品');
+  const eyebrow = q ? 'Search' : (activeCategory?.nameEn ?? 'All Products');
+
+  const chip = (active: boolean) =>
+    `rounded-full border px-4 py-1.5 text-sm transition-colors ${
+      active
+        ? 'border-ink bg-ink text-cream'
+        : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'
+    }`;
 
   return (
-    <section className="mx-auto flex w-[80%] max-w-5xl flex-col py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
-          <button
-            type="button"
-            onClick={() => updateParams({ category: undefined })}
-            className={`nav-item text-lg ${category ? '' : 'border-[#555555] font-medium'}`}
-          >
+    <section className="mx-auto max-w-6xl px-5 py-12">
+      <header className="border-b border-line pb-8 text-center">
+        <p className="eyebrow">{eyebrow}</p>
+        <h1 className="mt-2 font-display text-5xl font-semibold text-ink">{heading}</h1>
+      </header>
+
+      <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => updateParams({ category: undefined, q: undefined })} className={chip(!category && !q)}>
             全部
           </button>
           {categories.data?.map((item) => (
             <button
               key={item.slug}
               type="button"
-              onClick={() => updateParams({ category: item.slug })}
-              className={`nav-item text-lg ${
-                category === item.slug ? 'border-[#555555] font-medium' : ''
-              }`}
+              onClick={() => updateParams({ category: item.slug, q: undefined })}
+              className={chip(category === item.slug)}
             >
               {item.name}
             </button>
@@ -61,64 +68,78 @@ export function StorePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label htmlFor="sort" className="text-sm text-ink-soft">
+          <label htmlFor="sort" className="text-xs tracking-wide text-ink-faint">
             排序
           </label>
-          <select
-            id="sort"
-            value={sort}
-            onChange={(event) => updateParams({ sort: event.target.value })}
-            className="rounded-md border border-taupe-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-taupe-400 focus:outline-none"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="sort"
+              value={sort}
+              onChange={(event) => updateParams({ sort: event.target.value })}
+              className="appearance-none rounded-[var(--radius)] border border-line-strong bg-surface py-2 pr-9 pl-3.5 text-sm text-ink focus:border-gold focus:outline-none"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-ink-faint"
+            />
+          </div>
         </div>
       </div>
 
-      <h1 className="mt-8 text-3xl font-bold">{heading}</h1>
-      {activeCategory && <p className="mt-1 text-sm text-ink-faint">{activeCategory.nameEn}</p>}
+      {q && (
+        <button
+          type="button"
+          onClick={() => updateParams({ q: undefined })}
+          className="mt-4 inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink"
+        >
+          清除搜尋 <CloseIcon size={14} />
+        </button>
+      )}
 
-      {products.isPending ? (
-        <Spinner />
-      ) : products.isError ? (
-        <div className="mt-8">
+      <div className="mt-8">
+        {products.isPending ? (
+          <ProductGridSkeleton />
+        ) : products.isError ? (
           <ErrorState error={products.error} onRetry={() => products.refetch()} />
-        </div>
-      ) : products.data.items.length === 0 ? (
-        <div className="mt-8">
+        ) : products.data.items.length === 0 ? (
           <EmptyState
             title="找不到符合的商品"
             description={q ? `沒有與「${q}」相符的商品，換個關鍵字試試。` : '這個分類目前沒有商品。'}
           />
-        </div>
-      ) : (
-        <>
-          <p className="pt-4 pb-6 text-sm text-ink-faint">
-            共 {products.data.pagination.total} 件商品
-          </p>
-          <div className="grid grid-cols-2 gap-x-10 gap-y-8 sm:grid-cols-3">
-            {products.data.items.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={product.price}
-                imageUrl={product.imageUrl}
-                totalStock={product.totalStock}
-              />
-            ))}
-          </div>
-          <Pagination
-            page={products.data.pagination.page}
-            totalPages={products.data.pagination.totalPages}
-            onChange={(next) => updateParams({ page: String(next) })}
-          />
-        </>
-      )}
+        ) : (
+          <>
+            <p className="pb-6 text-sm text-ink-faint">
+              共 {products.data.pagination.total} 件商品
+            </p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+              {products.data.items.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  imageUrl={product.imageUrl}
+                  categoryName={product.category.name}
+                  averageRating={product.averageRating}
+                  reviewCount={product.reviewCount}
+                  totalStock={product.totalStock}
+                />
+              ))}
+            </div>
+            <Pagination
+              page={products.data.pagination.page}
+              totalPages={products.data.pagination.totalPages}
+              onChange={(next) => updateParams({ page: String(next) })}
+            />
+          </>
+        )}
+      </div>
     </section>
   );
 }

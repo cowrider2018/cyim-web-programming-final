@@ -17,7 +17,7 @@ export function AboutPage() {
         <h1 className="mt-4 text-5xl italic">關於 Maisie</h1>
       </header>
 
-      <div className="mx-auto mt-10 max-w-3xl rounded-[10px] bg-sand p-6 shadow-[0_4px_8px_rgba(0,0,0,0.1)] sm:p-10">
+      <div className="mx-auto mt-10 max-w-3xl rounded-[10px] bg-stone-100 p-6 shadow-[0_4px_8px_rgba(0,0,0,0.1)] sm:p-10">
         <div className="space-y-5 leading-relaxed text-ink-soft">
           <p>
             Maisie 是一個以「輕珠寶」為核心的飾品選物品牌。我們相信，飾品不需要昂貴或隆重，
@@ -45,12 +45,12 @@ export function AboutPage() {
         ))}
       </div>
 
-      <section className="mt-12 rounded-[20px] bg-white p-8 text-center shadow-[0_5px_15px_rgba(0,0,0,0.06)]">
+      <section className="mt-12 rounded-[var(--radius-lg)] bg-white p-8 text-center shadow-[0_5px_15px_rgba(0,0,0,0.06)]">
         <h2 className="text-3xl italic">想找點什麼？</h2>
         <p className="mt-2 text-sm text-ink-soft">
           從項鍊、手鍊到耳飾與戒指，慢慢逛，總有一件適合你。
         </p>
-        <Link to="/store" className="btn-taupe mt-6">
+        <Link to="/store" className="btn-primary mt-6">
           前往商店
         </Link>
       </section>
