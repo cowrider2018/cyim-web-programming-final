@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+
+# SQLite database files — created by `npm run db:migrate`
+*.db
+*.db-shm
+*.db-wal
+server/data/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local session settings
+.claude/
