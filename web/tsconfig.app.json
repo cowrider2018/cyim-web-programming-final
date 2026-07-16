@@ -18,7 +18,11 @@
     "noEmit": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] },
+    "paths": {
+      "@/*": ["./src/*"],
+      // The demo reuses the server's schemas and services; see web/src/demo/.
+      "@server/*": ["../server/src/*"]
+    },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
   },
   "include": ["src"]

@@ -85,6 +85,31 @@ Open **http://localhost:5173**.
 | `npm run db:seed` | Reset content and reseed the catalogue |
 | `npm run db:reset` | Delete the SQLite file (then migrate + seed) |
 | `npm run db:generate --workspace server` | Generate a migration from schema changes |
+| `npm run build:demo` | Seed a snapshot and build the static GitHub Pages demo |
+
+---
+
+## Live demo (GitHub Pages)
+
+**https://cowrider2018.github.io/cyim-web-programming-final/**
+
+GitHub Pages only serves static files, so it can't run the Express API. Rather than ship a cut-down mock, the demo build runs the **whole stack inside the browser**: the exact same services, Zod schemas, and Drizzle queries the server uses, against SQLite compiled to WebAssembly ([sql.js](https://sql.js.org/)). The order state machine, stock enforcement, bcrypt password hashing, and role checks are all really executing — there is just no server.
+
+How the same code runs in both places:
+
+- A [Vite plugin](web/vite.config.ts) swaps the server's `db/client.ts` (native better-sqlite3) for a browser client ([web/src/demo/client.ts](web/src/demo/client.ts)) that opens the seeded database with sql.js. Every service above it is reused unchanged.
+- [web/src/demo/router.ts](web/src/demo/router.ts) replaces Express — it matches method and path, checks the session, validates with the same schemas, and calls the same services. [apiFetch](web/src/lib/api.ts) routes to it instead of `fetch` when `VITE_DEMO=true`.
+- The database lives in memory, so it's snapshotted to IndexedDB after each write; a visitor's orders and account survive a reload. Clearing site data resets to the seeded catalogue.
+- The httpOnly-cookie JWT is meaningless without a server to sign it, so the demo stores the user id and re-reads the user per request — the same rule the real middleware follows.
+
+Deploys happen automatically from `main` via [.github/workflows/deploy.yml](.github/workflows/deploy.yml) (enable Pages → Source: GitHub Actions once, in the repo settings). To preview a production build locally:
+
+```bash
+npm run build:demo
+npm run preview:demo --workspace web
+```
+
+Local `npm run dev` is unaffected: it still runs the real API and web app, and none of the demo code is bundled.
 
 ---
 
@@ -109,6 +134,7 @@ Open **http://localhost:5173**.
         ├── context/            # auth provider
         ├── hooks/              # one hook per API resource
         ├── components/         # layout and shared UI
+        ├── demo/               # in-browser stack for the static build (see Live demo)
         └── pages/              # route components
 ```
 

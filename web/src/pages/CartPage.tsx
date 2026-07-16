@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { EmptyState, ErrorState, FormError, Spinner } from '../components/ui';
 import { MinusIcon, PlusIcon, TrashIcon } from '../components/icons';
+import { asset } from '../lib/asset';
 import {
   useCart,
   useClearCart,
@@ -80,7 +81,7 @@ export function CartPage() {
                 >
                   {item.imageUrl && (
                     <img
-                      src={item.imageUrl}
+                      src={asset(item.imageUrl)}
                       alt={item.productName}
                       className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />

@@ -4,6 +4,7 @@ import { ProductGridSkeleton } from '../components/Skeleton';
 import { SectionHeading } from '../components/ui';
 import { SparkleIcon, ShieldIcon, TruckIcon } from '../components/icons';
 import { useCategories, useNewArrivals } from '../hooks/use-catalog';
+import { asset } from '../lib/asset';
 
 const categoryImages: Record<string, string> = {
   necklaces: '/images/1/10000002_1.PNG',
@@ -28,7 +29,7 @@ export function HomePage() {
       <section className="relative">
         <div className="relative h-[78vh] min-h-[520px] overflow-hidden">
           <img
-            src="/images/top/top.PNG"
+            src={asset('/images/top/top.PNG')}
             alt=""
             className="size-full object-cover object-center"
           />
@@ -81,7 +82,7 @@ export function HomePage() {
                 className="group relative aspect-[4/5] overflow-hidden rounded-[var(--radius-lg)]"
               >
                 <img
-                  src={categoryImages[category.slug]}
+                  src={asset(categoryImages[category.slug])}
                   alt=""
                   loading="lazy"
                   className="size-full object-cover transition-transform duration-[900ms] ease-[var(--ease-out)] group-hover:scale-[1.06]"

@@ -28,7 +28,7 @@ if (!container) throw new Error('Root element #root not found');
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ToastProvider>
           <AuthProvider>
             <App />

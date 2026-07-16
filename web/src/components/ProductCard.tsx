@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { asset } from '../lib/asset';
 import { formatPrice } from '../lib/format';
 import { StarRating } from './ui';
 
@@ -34,7 +35,7 @@ export function ProductCard({
       <div className="lift relative aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-line bg-stone-100">
         {imageUrl ? (
           <img
-            src={imageUrl}
+            src={asset(imageUrl)}
             alt={name}
             loading="lazy"
             className="size-full object-cover transition-transform duration-[900ms] ease-[var(--ease-out)] group-hover:scale-[1.06]"

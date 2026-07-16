@@ -6,19 +6,25 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:demo": "tsc -b && vite build --mode demo",
     "preview": "vite preview",
+    "preview:demo": "vite preview --mode demo",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.64.1",
+    "bcryptjs": "^2.4.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.1"
+    "react-router-dom": "^6.28.1",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^4.3.4",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3",

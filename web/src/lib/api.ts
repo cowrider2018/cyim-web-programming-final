@@ -29,8 +29,40 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
+/**
+ * The GitHub Pages build has no server to call, so it answers requests in the
+ * page instead — same services, same schemas, SQLite compiled to WASM. Vite
+ * replaces this with a literal and drops the branch, so a normal build neither
+ * bundles nor loads the demo stack.
+ */
+const DEMO = import.meta.env.VITE_DEMO === 'true';
+
+/** Turns a status and payload into the result callers expect, or throws. */
+function unwrap<T>(status: number, payload: unknown): T {
+  if (status === 204) return undefined as T;
+
+  if (status < 200 || status >= 300) {
+    const error = (payload as ApiErrorBody | null)?.error;
+    throw new ApiError(
+      status,
+      error?.code ?? 'UNKNOWN',
+      error?.message ?? `Request failed with status ${status}`,
+      error?.details,
+    );
+  }
+
+  return payload as T;
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options;
+  const method = rest.method ?? 'GET';
+
+  if (DEMO) {
+    const { handleDemoRequest } = await import('../demo/router');
+    const result = await handleDemoRequest(method, `/api${path}`, body);
+    return unwrap<T>(result.status, result.body);
+  }
 
   const response = await fetch(`/api${path}`, {
     ...rest,
@@ -45,19 +77,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (response.status === 204) return undefined as T;
 
-  const payload = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const error = (payload as ApiErrorBody | null)?.error;
-    throw new ApiError(
-      response.status,
-      error?.code ?? 'UNKNOWN',
-      error?.message ?? `Request failed with status ${response.status}`,
-      error?.details,
-    );
-  }
-
-  return payload as T;
+  return unwrap<T>(response.status, await response.json().catch(() => null));
 }
 
 export const api = {

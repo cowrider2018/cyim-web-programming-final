@@ -6,6 +6,7 @@ import { useAuth } from '../context/auth';
 import { useCart } from '../hooks/use-cart';
 import { useCheckout } from '../hooks/use-orders';
 import { ApiError } from '../lib/api';
+import { asset } from '../lib/asset';
 import { formatPrice, paymentMethodLabels } from '../lib/format';
 import type { PaymentMethod } from '../lib/types';
 
@@ -199,7 +200,7 @@ export function CheckoutPage() {
                 <li key={item.variantId} className="flex gap-3">
                   <div className="size-14 shrink-0 overflow-hidden rounded-[var(--radius)] border border-line bg-stone-100">
                     {item.imageUrl && (
-                      <img src={item.imageUrl} alt="" className="size-full object-cover" />
+                      <img src={asset(item.imageUrl)} alt="" className="size-full object-cover" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ErrorState, FormError, Spinner, StatusBadge } from '../components/ui';
 import { useCancelOrder, useOrder } from '../hooks/use-orders';
+import { asset } from '../lib/asset';
 import { formatDateTime, formatPrice, paymentMethodLabels } from '../lib/format';
 
 const cancellableStatuses = ['pending', 'paid'];
@@ -73,7 +74,7 @@ export function OrderDetailPage() {
               className="size-20 shrink-0 overflow-hidden rounded-[var(--radius)] bg-stone-100"
             >
               {item.imageUrl && (
-                <img src={item.imageUrl} alt="" className="size-full object-cover" />
+                <img src={asset(item.imageUrl)} alt="" className="size-full object-cover" />
               )}
             </Link>
             <div className="flex-1">

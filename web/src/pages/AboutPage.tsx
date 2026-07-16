@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { asset } from '../lib/asset';
 
 const team = [
   '/images/us/11144115.jpg',
@@ -40,7 +41,7 @@ export function AboutPage() {
             key={src}
             className="aspect-square overflow-hidden rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
           >
-            <img src={src} alt="" loading="lazy" className="size-full object-cover" />
+            <img src={asset(src)} alt="" loading="lazy" className="size-full object-cover" />
           </div>
         ))}
       </div>

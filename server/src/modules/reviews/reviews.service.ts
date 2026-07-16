@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/client.js';
 import { orderItems, orders, reviews, users } from '../../db/schema.js';
 import {

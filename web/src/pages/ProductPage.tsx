@@ -9,6 +9,7 @@ import { useAuth } from '../context/auth';
 import { useAddToCart } from '../hooks/use-cart';
 import { useProduct, useProductReviews, useRelatedProducts } from '../hooks/use-catalog';
 import { ApiError } from '../lib/api';
+import { asset } from '../lib/asset';
 import { formatDate, formatPrice } from '../lib/format';
 
 export function ProductPage() {
@@ -87,7 +88,7 @@ export function ProductPage() {
           <div className="group relative aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-line bg-stone-100">
             {data.images.length > 0 ? (
               <img
-                src={data.images[activeImage]?.url}
+                src={asset(data.images[activeImage]?.url)}
                 alt={data.name}
                 className="size-full object-cover"
               />
@@ -132,7 +133,7 @@ export function ProductPage() {
                     index === activeImage ? 'border-ink' : 'border-line hover:border-line-strong'
                   }`}
                 >
-                  <img src={image.url} alt="" className="size-full object-cover" />
+                  <img src={asset(image.url)} alt="" className="size-full object-cover" />
                 </button>
               ))}
             </div>

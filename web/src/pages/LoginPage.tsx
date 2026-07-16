@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { FormError } from '../components/ui';
 import { useAuth } from '../context/auth';
 import { ApiError } from '../lib/api';
+import { asset } from '../lib/asset';
 
 type Mode = 'login' | 'register';
 
@@ -70,7 +71,7 @@ export function LoginPage() {
   return (
     <div className="mx-auto grid max-w-6xl gap-0 px-5 py-12 lg:grid-cols-2 lg:gap-12">
       <div className="hidden overflow-hidden rounded-[var(--radius-lg)] lg:block">
-        <img src="/images/log.jpg" alt="" className="size-full object-cover" />
+        <img src={asset('/images/log.jpg')} alt="" className="size-full object-cover" />
       </div>
 
       <div className="flex items-center">
