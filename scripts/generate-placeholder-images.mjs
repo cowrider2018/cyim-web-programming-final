@@ -39,6 +39,18 @@ function hash(str) {
   return h >>> 0;
 }
 
+/** Seeded PRNG (mulberry32) so a scatter layout is stable across runs. */
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 /**
  * Line-art motifs, drawn in a 100×100 box and stroked at render time. Keyed by
  * the top-level folder so each category reads as itself; portraits and the
@@ -69,41 +81,71 @@ const glyphs = {
   portrait:
     '<circle cx="50" cy="40" r="14" fill="none"/>' +
     '<path d="M28 78 Q28 56 50 56 Q72 56 72 78" fill="none"/>',
-  // Hero banners: a small sparkle cluster.
-  sparkle:
-    '<path d="M50 28 Q52 46 68 50 Q52 54 50 72 Q48 54 32 50 Q48 46 50 28 z" fill="none"/>' +
-    '<path d="M74 34 Q75 41 80 42 Q75 43 74 50 Q73 43 68 42 Q73 41 74 34 z" fill="none"/>',
 };
 
-/** Picks a motif from where the file sits in the tree. */
-function glyphFor(relPath) {
+/**
+ * Classifies a file by where it sits: the wide homepage banners and the tall
+ * login panel are art-directed full-bleed visuals, so they get a scattered
+ * composition rather than a single centered icon that would look lost at that
+ * scale (and washed out under the page's dark hero overlay).
+ */
+function kindFor(relPath) {
   const [top] = relPath.split(sep);
+  if (top === 'top' || relPath.startsWith('log')) return 'hero';
   if (top === '1') return glyphs.necklace;
   if (top === '2') return glyphs.bracelet;
   if (top === '3') return glyphs.earrings;
   if (top === '4') return glyphs.ring;
   if (top === 'us') return glyphs.portrait;
-  if (top === 'top' || relPath.startsWith('log')) return glyphs.sparkle;
   return glyphs.gem;
+}
+
+/** A four-point sparkle, sized `r`, centered at (x, y). */
+function sparkle(x, y, r) {
+  const t = r * 0.32; // waist of the star
+  return `M${x} ${y - r} Q${x + t} ${y - t} ${x + r} ${y} Q${x + t} ${y + t} ${x} ${y + r} Q${x - t} ${y + t} ${x - r} ${y} Q${x - t} ${y - t} ${x} ${y - r} z`;
+}
+
+/** The scattered key-visual: sparkles of varying size spread across the frame. */
+function heroComposition(width, height, seed, stroke) {
+  const rand = rng(seed);
+  const short = Math.min(width, height);
+  const marks = [];
+
+  // A loose grid with per-cell jitter spreads marks evenly without clustering.
+  const cols = Math.max(4, Math.round(width / (short * 0.5)));
+  const rows = Math.max(3, Math.round(height / (short * 0.5)));
+  for (let cy = 0; cy < rows; cy++) {
+    for (let cx = 0; cx < cols; cx++) {
+      if (rand() < 0.28) continue; // leave gaps
+      const x = ((cx + 0.5 + (rand() - 0.5) * 0.7) / cols) * width;
+      const y = ((cy + 0.5 + (rand() - 0.5) * 0.7) / rows) * height;
+      const r = short * (0.015 + rand() * 0.05);
+      const opacity = (0.28 + rand() * 0.5).toFixed(2);
+      if (rand() < 0.35) {
+        // A plain dot for rhythm.
+        marks.push(
+          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.28).toFixed(1)}" fill="${palette.line}" stroke="none" opacity="${opacity}"/>`,
+        );
+      } else {
+        marks.push(
+          `<path d="${sparkle(x, y, r)}" fill="none" stroke="${palette.line}" stroke-width="${stroke.toFixed(2)}" opacity="${opacity}"/>`,
+        );
+      }
+    }
+  }
+  return marks.join('\n    ');
 }
 
 function buildSvg(width, height, relPath) {
   const seed = hash(relPath);
-  const glyph = glyphFor(relPath);
-
+  const kind = kindFor(relPath);
   const short = Math.min(width, height);
-  const size = short * 0.4; // motif footprint
-  const cx = width / 2;
-  const cy = height / 2;
-  // A hairline inset frame, echoing the card borders.
-  const inset = Math.max(6, Math.round(short * 0.04));
   const stroke = Math.max(1.4, short * 0.006);
-  // A degree or two of tilt so no two placeholders sit identically.
-  const tilt = ((seed % 5) - 2) * 0.9;
-  // Nudge the background angle a touch per image.
   const angle = 115 + (seed % 30);
+  const inset = Math.max(6, Math.round(short * 0.04));
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  const backdrop = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
     <linearGradient id="bg" gradientTransform="rotate(${angle} 0.5 0.5)">
       <stop offset="0" stop-color="${palette.bgTop}"/>
@@ -115,13 +157,25 @@ function buildSvg(width, height, relPath) {
     </radialGradient>
   </defs>
   <rect width="${width}" height="${height}" fill="url(#bg)"/>
-  <rect width="${width}" height="${height}" fill="url(#glow)"/>
+  <rect width="${width}" height="${height}" fill="url(#glow)"/>`;
+
+  if (kind === 'hero') {
+    // Full-bleed scatter — no inset frame, since these sit edge to edge.
+    return `${backdrop}
+    ${heroComposition(width, height, seed, stroke)}
+</svg>`;
+  }
+
+  // A single centered motif for product cards and portraits.
+  const size = short * 0.4;
+  const tilt = ((seed % 5) - 2) * 0.9;
+  return `${backdrop}
   <rect x="${inset}" y="${inset}" width="${width - inset * 2}" height="${height - inset * 2}"
         fill="none" stroke="${palette.border}" stroke-width="${Math.max(1, stroke * 0.7)}"/>
-  <g transform="translate(${cx} ${cy}) rotate(${tilt}) scale(${size / 100}) translate(-50 -50)"
+  <g transform="translate(${width / 2} ${height / 2}) rotate(${tilt}) scale(${size / 100}) translate(-50 -50)"
      stroke="${palette.line}" stroke-width="${(stroke / size) * 100 * 1.6}"
      stroke-linecap="round" stroke-linejoin="round">
-    ${glyph}
+    ${kind}
   </g>
 </svg>`;
 }
